@@ -1,0 +1,7 @@
+# Stellar Digital Identity Contract
+
+target/
+.env
+contract-info.json
+test-identity.json
+*.wasm
