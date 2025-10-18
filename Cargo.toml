@@ -17,10 +17,6 @@ soroban-sdk = { version = "21.7.7", features = ["testutils"] }
 [features]
 testutils = ["soroban-sdk/testutils"]
 
-[[bin]]
-name = "stellar-digital-identity"
-path = "src/main.rs"
-
 [profile.release]
 opt-level = "z"
 overflow-checks = true

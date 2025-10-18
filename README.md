@@ -1,414 +1,681 @@
 # 🌟 Stellar Digital Identity Smart Contract
 
-> Hệ thống quản lý danh tính số phi tập trung trên blockchain Stellar sử dụng Soroban smart contracts
+Một smart contract quản lý danh tính số trên mạng Stellar, cho phép người dùng đăng ký, xác minh và quản lý quyền truy cập danh tính một cách an toàn và phi tập trung.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Rust](https://img.shields.io/badge/rust-%23000000.svg?style=flat&logo=rust&logoColor=white)](https://www.rust-lang.org/)
-[![Stellar](https://img.shields.io/badge/Stellar-7D00FF?style=flat&logo=stellar&logoColor=white)](https://stellar.org/)
+## 📋 Mục lục
 
-## 📖 Tổng quan
+- [Tổng quan](#-tổng-quan)
+- [Kiến trúc và cấu trúc dữ liệu](#-kiến-trúc-và-cấu-trúc-dữ-liệu)
+- [Chức năng chính](#-chức-năng-chính)
+- [Phân tích code chi tiết](#-phân-tích-code-chi-tiết)
+- [Cài đặt và yêu cầu](#️-cài-đặt-và-yêu-cầu)
+- [Hướng dẫn build project](#-hướng-dẫn-build-project)
+- [Hướng dẫn deploy contract](#-hướng-dẫn-deploy-contract)
+- [Hướng dẫn test contract](#-hướng-dẫn-test-contract)
+- [Ví dụ sử dụng](#-ví-dụ-sử-dụng)
+- [API Reference](#-api-reference)
+- [Bảo mật](#-bảo mật)
 
-**Stellar Digital Identity** là một smart contract được xây dựng trên blockchain Stellar, cung cấp giải pháp quản lý danh tính số an toàn, minh bạch và phi tập trung. Hệ thống cho phép người dùng:
+## 🎯 Tổng quan
 
-- 🆔 Đăng ký và quản lý danh tính số
-- 🔐 Kiểm soát quyền truy cập thông tin cá nhân
-- ✅ Xác minh danh tính với nhiều cấp độ bảo mật
-- 🔄 Cấp phát và thu hồi quyền truy cập linh hoạt
-- 📊 Theo dõi lịch sử thay đổi minh bạch
+**Stellar Digital Identity** là một smart contract được xây dựng trên Soroban (Stellar smart contract platform) để quản lý danh tính số. Contract này cung cấp:
 
-## 🏗️ Kiến trúc hệ thống
+- **Đăng ký danh tính**: Người dùng có thể tạo và quản lý danh tính số của mình
+- **Xác minh danh tính**: Hệ thống xác minh đa cấp (0-3) bởi admin
+- **Quản lý quyền truy cập**: Cấp phát và thu hồi quyền truy cập cho người khác
+- **Bảo mật dữ liệu**: Sử dụng hash để lưu trữ tài liệu xác minh
+- **Audit trail**: Theo dõi tất cả các thay đổi với timestamp
 
-### Core Components
+## 🏗 Kiến trúc và cấu trúc dữ liệu
 
-```
-📦 Stellar Digital Identity
-├── 🧠 Smart Contract Logic (Rust/Soroban)
-├── 🔧 Build & Deployment Tools (PowerShell)
-├── 🧪 Comprehensive Testing Suite
-└── 📚 Documentation & Examples
-```
+### Cấu trúc dữ liệu chính
 
-## 📁 Cấu trúc Project
-
-```
-stellar-digital-identity/
-├── 📂 src/                         # 🎯 Core source code
-│   ├── lib.rs                      # 🧠 Main smart contract logic
-│   ├── test.rs                     # 🧪 Comprehensive unit tests
-│   └── main.rs                     # 📍 Entry point (minimal)
-├── 📂 scripts/                     # ⚙️ Deployment & management tools
-│   ├── deploy.ps1                  # 🚀 Contract deployment script
-│   ├── test.ps1                    # 🔍 Integration testing script
-│   └── utils.ps1                   # 🛠️ Utility functions
-├── 📂 target/                      # 🔨 Build artifacts (auto-generated)
-├── 📂 test_snapshots/              # 📸 Test cache data (auto-generated)
-├── 📋 Cargo.toml                   # 🦀 Rust project configuration
-├── 📋 package.json                 # 📦 Node.js scripts configuration
-├── 🔧 manage.ps1                   # 🎛️ Main management script
-├── 🔧 check-build.ps1              # ✅ Environment validation script
-├── 🔧 Makefile                     # 🔨 Build automation (Linux/Mac)
-├── 📄 .env.example                 # 🔐 Environment variables template
-├── 📄 .gitignore                   # 🚫 Git ignore patterns
-└── 📜 LICENSE                      # ⚖️ MIT License
-```
-
-## 🧩 Các thành phần chính
-
-### 1. 🎯 Smart Contract Core (`src/lib.rs`)
-
-**Structures & Data Types:**
-- `IdentityData` - Thông tin danh tính người dùng
-- `AccessPermission` - Quyền truy cập và phân quyền
-- `VerificationRequest` - Yêu cầu xác minh danh tính
-- `EventType` - Các loại sự kiện hệ thống
-- `DataKey` - Storage keys cho blockchain
-
-**Core Functions:**
+#### 1. IdentityData
 ```rust
-// 🏁 Contract Management
-fn initialize(env: Env, admin: Address)
-
-// 👤 Identity Management
-fn register_identity(env: Env, identity_id: String, owner: Address, ...)
-fn update_identity(env: Env, identity_id: String, ...)
-fn deactivate_identity(env: Env, identity_id: String)
-
-// 🔐 Access Control
-fn grant_access(env: Env, identity_id: String, granted_to: Address, ...)
-fn revoke_access(env: Env, identity_id: String, revoked_from: Address)
-fn check_access(env: Env, identity_id: String, requester: Address)
-
-// ✅ Verification System
-fn verify_identity(env: Env, identity_id: String, verification_level: u32)
-
-// 📊 Query Functions
-fn get_identity(env: Env, identity_id: String, requester: Address)
-fn get_identities_by_owner(env: Env, owner: Address)
-fn get_total_identities(env: Env)
-fn get_admin(env: Env)
-```
-
-### 2. 🧪 Testing Suite (`src/test.rs`)
-
-Comprehensive test coverage bao gồm:
-- ✅ Contract initialization
-- ✅ Identity registration & management
-- ✅ Access control mechanisms
-- ✅ Verification workflows
-- ✅ Permission management
-- ✅ Error handling scenarios
-
-### 3. 🛠️ Management Scripts
-
-#### `manage.ps1` - Main Management Interface
-```powershell
-# Build contract
-.\manage.ps1 -Action build
-
-# Deploy to testnet
-.\manage.ps1 -Action deploy -SecretKey "YOUR_SECRET_KEY"
-
-# Run integration tests
-.\manage.ps1 -Action test
-
-# Full workflow (build + deploy + test)
-.\manage.ps1 -Action full -SecretKey "YOUR_SECRET_KEY"
-```
-
-#### `scripts/deploy.ps1` - Deployment Automation
-- 🔧 Environment setup và validation
-- 💰 Account funding (testnet)
-- 🚀 Contract deployment
-- ⚙️ Contract initialization
-- 📝 Configuration file generation
-
-#### `scripts/test.ps1` - Integration Testing
-- 🧪 End-to-end testing trên blockchain thực
-- 👥 Multi-user scenarios
-- 🔐 Access control validation
-- ✅ Verification workflows
-
-#### `scripts/utils.ps1` - Utility Functions
-- 📊 Contract statistics
-- 👤 User management
-- 🆔 Test identity creation
-- 📈 Status monitoring
-
-## 🚀 Hướng dẫn Setup & Build
-
-### 📋 Yêu cầu hệ thống
-
-1. **Rust & Cargo**
-   ```bash
-   # Install Rust
-   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-   
-   # Add WASM target
-   rustup target add wasm32-unknown-unknown
-   ```
-
-2. **Stellar CLI**
-   ```bash
-   npm install -g @stellar/cli
-   ```
-
-3. **PowerShell** (Windows) hoặc **Bash** (Linux/Mac)
-
-### 🔍 Bước 1: Kiểm tra môi trường
-
-```powershell
-# Windows
-.\check-build.ps1
-
-# Linux/Mac
-make install  # Install dependencies
-make check    # Validate environment
-```
-
-**Output mong đợi:**
-```
-✅ Rust Environment: Ready
-✅ WASM Target: Installed  
-✅ Dependencies: Resolved
-✅ Contract Build: Successful
-✅ Unit Tests: Passed
-```
-
-### 🔨 Bước 2: Build Contract
-
-```powershell
-# Windows - Using manage script
-.\manage.ps1 -Action build
-
-# Linux/Mac - Using Makefile
-make build
-
-# Manual build
-cargo build --target wasm32-unknown-unknown --release
-```
-
-**Kết quả:** Contract WASM file được tạo tại:
-```
-target/wasm32-unknown-unknown/release/stellar_digital_identity.wasm
-```
-
-### 🧪 Bước 3: Chạy Tests
-
-```powershell
-# Unit tests
-cargo test
-
-# Integration tests (cần deploy trước)
-.\scripts\test.ps1
-```
-
-### 🚀 Bước 4: Deploy lên Stellar Testnet
-
-1. **Chuẩn bị Secret Key:**
-   ```bash
-   # Tạo keypair mới
-   stellar keys generate alice --network testnet
-   
-   # Hoặc import existing key
-   stellar keys add alice --secret-key "YOUR_SECRET_KEY" --network testnet
-   ```
-
-2. **Deploy Contract:**
-   ```powershell
-   # Windows
-   .\manage.ps1 -Action deploy -SecretKey "YOUR_SECRET_KEY"
-   
-   # Manual deployment
-   .\scripts\deploy.ps1 -SecretKey "YOUR_SECRET_KEY" -Network testnet
-   ```
-
-3. **Verify Deployment:**
-   ```powershell
-   # Check contract info
-   .\scripts\utils.ps1 -Action info
-   
-   # Get contract stats
-   .\scripts\utils.ps1 -Action stats
-   ```
-
-### 🔍 Bước 5: Testing End-to-End
-
-```powershell
-# Run full integration tests
-.\scripts\test.ps1 -Network testnet
-
-# Create test identity
-.\scripts\utils.ps1 -Action register
-
-# Check user identities
-.\scripts\utils.ps1 -Action user
-```
-
-## 📊 Monitoring & Management
-
-### Contract Information Files
-
-Sau khi deploy, hệ thống tạo các file thông tin:
-
-```json
-// contract-info.json
-{
-  "contractAddress": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47MA2E2ROHSXNQIAHZLJNQ",
-  "adminAddress": "GBDFELLLKS7YWPP3FLSIYIGCC2XBJRKEFCM5GTEN4TIFBI6SDV63YYRZ",
-  "network": "testnet",
-  "rpcUrl": "https://soroban-testnet.stellar.org",
-  "deployedAt": "2024-10-18 15:30:45"
+pub struct IdentityData {
+    pub owner: Address,          // Địa chỉ sở hữu danh tính
+    pub full_name: String,       // Tên đầy đủ
+    pub email: String,           // Email
+    pub document_hash: Bytes,    // Hash của tài liệu xác minh
+    pub verification_level: u32, // Mức độ xác minh (0-3)
+    pub is_active: bool,         // Trạng thái hoạt động
+    pub created_at: u64,         // Thời gian tạo
+    pub updated_at: u64,         // Thời gian cập nhật
 }
 ```
 
-### Environment Variables
+**Chức năng**: Lưu trữ thông tin cơ bản của một danh tính số, bao gồm thông tin cá nhân, mức độ xác minh và metadata.
+
+#### 2. AccessPermission
+```rust
+pub struct AccessPermission {
+    pub granted_to: Address,     // Địa chỉ được cấp quyền
+    pub permission_type: u32,    // Loại quyền (1: read, 2: verify, 3: full)
+    pub expires_at: u64,         // Thời gian hết hạn
+    pub is_active: bool,         // Trạng thái hoạt động
+}
+```
+
+**Chức năng**: Quản lý quyền truy cập, cho phép owner chia sẻ thông tin danh tính với các bên thứ ba có thời hạn.
+
+#### 3. VerificationRequest
+```rust
+pub struct VerificationRequest {
+    pub requester: Address,      // Người yêu cầu xác minh
+    pub identity_id: String,     // ID danh tính cần xác minh
+    pub verification_type: u32,  // Loại xác minh
+    pub status: u32,             // Trạng thái (0: pending, 1: approved, 2: rejected)
+    pub requested_at: u64,       // Thời gian yêu cầu
+}
+```
+
+**Chức năng**: Quản lý các yêu cầu xác minh danh tính từ các bên thứ ba.
+
+#### 4. DataKey (Storage Keys)
+```rust
+pub enum DataKey {
+    Identity(String),              // identity_id -> IdentityData
+    Access(String, Address),       // (identity_id, address) -> AccessPermission
+    VerificationReq(String),       // request_id -> VerificationRequest
+    Admin,                         // Admin address
+    TotalIdentities,               // Tổng số danh tính
+    IdentityByOwner(Address),      // owner -> Vec<String> (identity_ids)
+}
+```
+
+**Chức năng**: Định nghĩa các khóa để lưu trữ dữ liệu trong Stellar storage, tối ưu hóa việc truy xuất và tổ chức dữ liệu.
+
+## ⚡ Chức năng chính
+
+### 1. **Quản lý danh tính**
+- Đăng ký danh tính mới với thông tin cơ bản
+- Cập nhật thông tin danh tính
+- Vô hiệu hóa danh tính
+
+### 2. **Hệ thống xác minh**
+- 4 mức độ xác minh (0: chưa xác minh → 3: xác minh cao nhất)
+- Chỉ admin có thể thực hiện xác minh
+- Theo dõi lịch sử xác minh
+
+### 3. **Quản lý quyền truy cập**
+- Cấp phát quyền truy cập có thời hạn
+- 3 loại quyền: read (1), verify (2), full (3)
+- Thu hồi quyền truy cập
+
+### 4. **Bảo mật và kiểm soát**
+- Xác thực owner cho mọi thao tác
+- Hash tài liệu để bảo vệ privacy
+- Event logging cho audit trail
+
+## 🔍 Phân tích code chi tiết
+
+### Initialize Function
+```rust
+pub fn initialize(env: Env, admin: Address) {
+    admin.require_auth();  // Xác thực admin
+    
+    env.storage().instance().set(&DataKey::Admin, &admin);
+    env.storage().instance().set(&DataKey::TotalIdentities, &0u32);
+    
+    log!(&env, "Digital Identity Contract initialized with admin: {}", admin);
+}
+```
+
+**Mục đích**: Khởi tạo contract với admin được chỉ định và thiết lập storage ban đầu.
+
+**Bảo mật**: Yêu cầu xác thực từ admin trước khi khởi tạo.
+
+### Register Identity Function
+```rust
+pub fn register_identity(
+    env: Env,
+    identity_id: String,
+    owner: Address,
+    full_name: String,
+    email: String,
+    document_hash: Bytes,
+) -> bool {
+    owner.require_auth();  // Chỉ owner mới có thể đăng ký
+
+    // Kiểm tra identity_id đã tồn tại
+    if env.storage().persistent().has(&DataKey::Identity(identity_id.clone())) {
+        return false;
+    }
+
+    let current_time = env.ledger().timestamp();
+    
+    let identity_data = IdentityData {
+        owner: owner.clone(),
+        full_name,
+        email,
+        document_hash,
+        verification_level: 0, // Bắt đầu chưa xác minh
+        is_active: true,
+        created_at: current_time,
+        updated_at: current_time,
+    };
+
+    // Lưu trữ và cập nhật indices
+    env.storage().persistent().set(&DataKey::Identity(identity_id.clone()), &identity_data);
+    // ... cập nhật owner indices và counters
+}
+```
+
+**Mục đích**: Đăng ký danh tính mới với kiểm tra trùng lặp và tự động tạo metadata.
+
+**Logic nghiệp vụ**: 
+- Kiểm tra ID không trùng lặp
+- Tự động set verification_level = 0
+- Cập nhật indices để query hiệu quả
+
+### Access Control Functions
+```rust
+pub fn grant_access(
+    env: Env,
+    identity_id: String,
+    granted_to: Address,
+    permission_type: u32,
+    duration_seconds: u64,
+) -> bool {
+    let identity_data: IdentityData = // ... lấy identity data
+    
+    identity_data.owner.require_auth(); // Chỉ owner mới cấp quyền
+    
+    // Validate permission type (1-3)
+    if permission_type == 0 || permission_type > 3 {
+        return false;
+    }
+
+    let current_time = env.ledger().timestamp();
+    let expires_at = current_time + duration_seconds;
+
+    let permission = AccessPermission {
+        granted_to: granted_to.clone(),
+        permission_type,
+        expires_at,
+        is_active: true,
+    };
+
+    env.storage().persistent().set(
+        &DataKey::Access(identity_id.clone(), granted_to.clone()),
+        &permission
+    );
+}
+```
+
+**Mục đích**: Cấp phát quyền truy cập có thời hạn và phân loại quyền.
+
+**Bảo mật**: 
+- Chỉ owner mới có thể cấp quyền
+- Validate permission type
+- Tự động hết hạn theo thời gian
+
+### Get Identity with Access Control
+```rust
+pub fn get_identity(env: Env, identity_id: String, requester: Address) -> Option<IdentityData> {
+    requester.require_auth();
+
+    let identity_data: IdentityData = // ... lấy data
+    
+    // Owner có quyền full access
+    if identity_data.owner == requester {
+        return Some(identity_data);
+    }
+
+    // Kiểm tra quyền được cấp
+    if let Some(permission) = env.storage()
+        .persistent()
+        .get::<DataKey, AccessPermission>(&DataKey::Access(identity_id.clone(), requester)) {
+        
+        let current_time = env.ledger().timestamp();
+        if permission.is_active && current_time <= permission.expires_at {
+            return Some(identity_data);
+        }
+    }
+
+    None // Không có quyền truy cập
+}
+```
+
+**Mục đích**: Truy xuất thông tin danh tính với kiểm soát quyền truy cập nghiêm ngặt.
+
+**Logic bảo mật**:
+- Owner luôn có quyền truy cập
+- Kiểm tra permission hợp lệ và chưa hết hạn
+- Trả về None nếu không có quyền
+
+## 🛠️ Cài đặt và yêu cầu
+
+### Yêu cầu hệ thống
+- **Rust**: phiên bản 1.70+
+- **Stellar CLI**: phiên bản 23.1+
+- **Target**: wasm32v1-none
+- **Dependencies**: soroban-sdk 21.7.7
+
+### Cài đặt Rust và Stellar CLI
 
 ```bash
-# .env file
-NETWORK=testnet
-RPC_URL=https://soroban-testnet.stellar.org
-SECRET_KEY=your_secret_key_here
-CONTRACT_ADDRESS=your_deployed_contract_address
-ADMIN_ADDRESS=your_admin_address
+# Cài đặt Rust
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source ~/.cargo/env
+
+# Cài đặt Stellar CLI
+cargo install --locked stellar-cli
+
+# Cài đặt target wasm32v1-none
+rustup target add wasm32v1-none
 ```
 
-## 🔐 Security Features
+### Clone và setup project
 
-- **🔒 Multi-level Verification** (0-3 levels)
-- **⏰ Time-based Access Control** với expiration
-- **👑 Admin-only Functions** cho verification
-- **🛡️ Owner-only Permissions** cho identity management
-- **📝 Audit Trail** thông qua blockchain events
+```bash
+# Clone project (hoặc tải xuống)
+git clone <repository-url>
+cd stellar-digital-identity
 
-## 🧪 Testing Scenarios
+# Kiểm tra dependencies
+cargo check
+```
 
-Contract được test với các scenarios:
+## 🔧 Hướng dẫn build project
 
-1. **Basic Functionality**
-   - Contract initialization
-   - Identity registration
-   - Data retrieval
+### Bước 1: Kiểm tra môi trường
+```bash
+# Kiểm tra Rust version
+rustc --version
+
+# Kiểm tra Stellar CLI
+stellar --version
+
+# Kiểm tra target wasm32v1-none
+rustup target list --installed | grep wasm32v1-none
+```
+
+### Bước 2: Build contract
+```bash
+# Build với Stellar CLI (khuyến nghị)
+stellar contract build
+
+# Hoặc build với cargo (để debug)
+cargo build --target wasm32v1-none --release
+```
+
+### Bước 3: Kiểm tra kết quả build
+```bash
+# File WASM sẽ được tạo tại:
+ls -la target/wasm32v1-none/release/stellar_digital_identity.wasm
+
+# Kiểm tra size file (nên < 64KB cho optimal deployment)
+du -h target/wasm32v1-none/release/stellar_digital_identity.wasm
+```
+
+## 🚀 Hướng dẫn deploy contract
+
+### Bước 1: Tạo và fund tài khoản
+
+```bash
+# Tạo key pair mới
+stellar keys generate alice --network testnet
+
+# Lấy địa chỉ public
+stellar keys address alice
+
+# Fund tài khoản trên testnet
+stellar keys fund alice --network testnet
+
+# Hoặc fund bằng curl nếu có lỗi SSL
+curl "https://friendbot.stellar.org/?addr=$(stellar keys address alice)"
+```
+
+### Bước 2: Deploy contract
+
+```bash
+# Deploy contract lên testnet
+stellar contract deploy \
+    --source alice \
+    --network testnet \
+    --wasm target/wasm32v1-none/release/stellar_digital_identity.wasm
+
+# Lưu lại CONTRACT_ID từ output
+export CONTRACT_ID="<CONTRACT_ID_FROM_OUTPUT>"
+```
+
+### Bước 3: Initialize contract
+
+```bash
+# Initialize với alice làm admin
+stellar contract invoke \
+    --source alice \
+    --network testnet \
+    --id $CONTRACT_ID \
+    --send=yes \
+    -- initialize --admin $(stellar keys address alice)
+```
+
+### Bước 4: Verify deployment
+
+```bash
+# Kiểm tra admin
+stellar contract invoke \
+    --source alice \
+    --network testnet \
+    --id $CONTRACT_ID \
+    -- get_admin
+
+# Kiểm tra total identities (nên = 0)
+stellar contract invoke \
+    --source alice \
+    --network testnet \
+    --id $CONTRACT_ID \
+    -- get_total_identities
+```
+
+## 🧪 Hướng dẫn test contract
+
+### Test cơ bản
+
+#### 1. Test đăng ký identity
+```bash
+stellar contract invoke \
+    --source alice \
+    --network testnet \
+    --id $CONTRACT_ID \
+    --send=yes \
+    -- register_identity \
+    --identity_id "user001" \
+    --owner $(stellar keys address alice) \
+    --full_name "Alice Johnson" \
+    --email "alice@example.com" \
+    --document_hash "d1e2f3a4b5c6789abc"
+```
+
+#### 2. Test lấy thông tin identity
+```bash
+stellar contract invoke \
+    --source alice \
+    --network testnet \
+    --id $CONTRACT_ID \
+    -- get_identity \
+    --identity_id "user001" \
+    --requester $(stellar keys address alice)
+```
+
+#### 3. Test xác minh identity (admin only)
+```bash
+stellar contract invoke \
+    --source alice \
+    --network testnet \
+    --id $CONTRACT_ID \
+    --send=yes \
+    -- verify_identity \
+    --identity_id "user001" \
+    --verification_level 2
+```
+
+### Test quản lý quyền truy cập
+
+#### 1. Tạo user thứ hai
+```bash
+# Tạo user bob
+stellar keys generate bob --network testnet
+stellar keys fund bob --network testnet
+```
+
+#### 2. Cấp quyền truy cập
+```bash
+stellar contract invoke \
+    --source alice \
+    --network testnet \
+    --id $CONTRACT_ID \
+    --send=yes \
+    -- grant_access \
+    --identity_id "user001" \
+    --granted_to $(stellar keys address bob) \
+    --permission_type 1 \
+    --duration_seconds 3600
+```
+
+#### 3. Test truy cập từ user khác
+```bash
+stellar contract invoke \
+    --source bob \
+    --network testnet \
+    --id $CONTRACT_ID \
+    -- get_identity \
+    --identity_id "user001" \
+    --requester $(stellar keys address bob)
+```
+
+#### 4. Thu hồi quyền truy cập
+```bash
+stellar contract invoke \
+    --source alice \
+    --network testnet \
+    --id $CONTRACT_ID \
+    --send=yes \
+    -- revoke_access \
+    --identity_id "user001" \
+    --revoked_from $(stellar keys address bob)
+```
+
+### Test cases nâng cao
+
+#### Test multiple identities
+```bash
+# Đăng ký nhiều identity cho cùng một owner
+for i in {002..005}; do
+    stellar contract invoke \
+        --source alice \
+        --network testnet \
+        --id $CONTRACT_ID \
+        --send=yes \
+        -- register_identity \
+        --identity_id "user$i" \
+        --owner $(stellar keys address alice) \
+        --full_name "User $i" \
+        --email "user$i@example.com" \
+        --document_hash "hash$i"
+done
+
+# Lấy danh sách identity của owner
+stellar contract invoke \
+    --source alice \
+    --network testnet \
+    --id $CONTRACT_ID \
+    -- get_identities_by_owner \
+    --owner $(stellar keys address alice)
+```
+
+## 💡 Ví dụ sử dụng
+
+### Kịch bản 1: Đăng ký danh tính cá nhân
+
+```bash
+# Alice đăng ký danh tính
+stellar contract invoke --source alice --network testnet --id $CONTRACT_ID --send=yes \
+-- register_identity \
+--identity_id "alice_personal" \
+--owner $(stellar keys address alice) \
+--full_name "Alice Smith" \
+--email "alice.smith@email.com" \
+--document_hash "sha256:abc123def456"
+
+# Admin xác minh danh tính Alice
+stellar contract invoke --source alice --network testnet --id $CONTRACT_ID --send=yes \
+-- verify_identity \
+--identity_id "alice_personal" \
+--verification_level 3
+```
+
+### Kịch bản 2: Chia sẻ thông tin với dịch vụ
+
+```bash
+# Alice cấp quyền đọc cho dịch vụ banking (bob)
+stellar contract invoke --source alice --network testnet --id $CONTRACT_ID --send=yes \
+-- grant_access \
+--identity_id "alice_personal" \
+--granted_to $(stellar keys address bob) \
+--permission_type 1 \
+--duration_seconds 86400  # 24 giờ
+
+# Dịch vụ banking truy cập thông tin
+stellar contract invoke --source bob --network testnet --id $CONTRACT_ID \
+-- get_identity \
+--identity_id "alice_personal" \
+--requester $(stellar keys address bob)
+
+# Alice thu hồi quyền sau khi hoàn thành giao dịch
+stellar contract invoke --source alice --network testnet --id $CONTRACT_ID --send=yes \
+-- revoke_access \
+--identity_id "alice_personal" \
+--revoked_from $(stellar keys address bob)
+```
+
+### Kịch bản 3: Cập nhật thông tin
+
+```bash
+# Alice cập nhật email mới
+stellar contract invoke --source alice --network testnet --id $CONTRACT_ID --send=yes \
+-- update_identity \
+--identity_id "alice_personal" \
+--full_name "Alice Smith" \
+--email "alice.new@email.com" \
+--document_hash "sha256:new_document_hash"
+```
+
+## 📚 API Reference
+
+### Core Functions
+
+| Function | Parameters | Return | Description |
+|----------|------------|--------|-------------|
+| `initialize` | `admin: Address` | `void` | Khởi tạo contract với admin |
+| `register_identity` | `identity_id, owner, full_name, email, document_hash` | `bool` | Đăng ký danh tính mới |
+| `update_identity` | `identity_id, full_name, email, document_hash` | `bool` | Cập nhật thông tin danh tính |
+| `get_identity` | `identity_id, requester` | `Option<IdentityData>` | Lấy thông tin danh tính |
+
+### Access Management
+
+| Function | Parameters | Return | Description |
+|----------|------------|--------|-------------|
+| `grant_access` | `identity_id, granted_to, permission_type, duration_seconds` | `bool` | Cấp quyền truy cập |
+| `revoke_access` | `identity_id, revoked_from` | `bool` | Thu hồi quyền truy cập |
+| `check_access` | `identity_id, requester` | `Option<AccessPermission>` | Kiểm tra quyền truy cập |
+
+### Admin Functions
+
+| Function | Parameters | Return | Description |
+|----------|------------|--------|-------------|
+| `verify_identity` | `identity_id, verification_level` | `bool` | Xác minh danh tính (admin only) |
+| `get_admin` | - | `Address` | Lấy địa chỉ admin |
+
+### Utility Functions
+
+| Function | Parameters | Return | Description |
+|----------|------------|--------|-------------|
+| `get_identities_by_owner` | `owner` | `Vec<String>` | Lấy danh sách identity của owner |
+| `deactivate_identity` | `identity_id` | `bool` | Vô hiệu hóa danh tính |
+| `get_total_identities` | - | `u32` | Lấy tổng số danh tính |
+
+### Permission Types
+
+| Type | Value | Description |
+|------|-------|-------------|
+| `READ` | 1 | Chỉ đọc thông tin cơ bản |
+| `VERIFY` | 2 | Đọc + xác minh tính hợp lệ |
+| `FULL` | 3 | Toàn quyền (trừ cập nhật) |
+
+### Verification Levels
+
+| Level | Description |
+|-------|-------------|
+| 0 | Chưa xác minh |
+| 1 | Xác minh cơ bản |
+| 2 | Xác minh tiêu chuẩn |
+| 3 | Xác minh cao nhất |
+
+## 🔒 Bảo mật
+
+### Các biện pháp bảo mật đã implement
+
+1. **Authentication & Authorization**
+   - Tất cả functions yêu cầu `require_auth()`
+   - Chỉ owner mới có thể sửa đổi identity của mình
+   - Admin role riêng biệt cho việc xác minh
 
 2. **Access Control**
-   - Permission granting/revoking
-   - Time-based expiration
-   - Unauthorized access prevention
+   - Hệ thống permission có thời hạn
+   - Phân loại quyền truy cập (read, verify, full)
+   - Tự động hết hạn permission
 
-3. **Verification Workflow**
-   - Admin verification process
-   - Level-based verification
-   - Status tracking
+3. **Data Protection**
+   - Lưu trữ document hash thay vì dữ liệu thô
+   - Timestamp cho audit trail
+   - Event logging cho monitoring
 
-4. **Error Handling**
-   - Invalid inputs
-   - Unauthorized operations
-   - Edge cases
+4. **Input Validation**
+   - Kiểm tra permission_type hợp lệ (1-3)
+   - Kiểm tra verification_level (0-3)
+   - Kiểm tra ID trùng lặp
 
-## 🐛 Troubleshooting
+### Best practices khi sử dụng
 
-### Common Issues & Solutions
-
-1. **Build Errors**
+1. **Quản lý keys an toàn**
    ```bash
-   # Clean and rebuild
-   cargo clean
-   cargo build --target wasm32-unknown-unknown --release
+   # Không commit private keys vào git
+   # Sử dụng environment variables
+   export STELLAR_PRIVATE_KEY="S..."
    ```
 
-2. **Deployment Failures**
+2. **Monitoring và logging**
    ```bash
-   # Check network connectivity
-   stellar network status --network testnet
-   
-   # Verify account funding
-   stellar account info --address YOUR_ADDRESS --network testnet
+   # Theo dõi events từ contract
+   stellar events --start-ledger <ledger> --id $CONTRACT_ID
    ```
 
-3. **Test Failures**
+3. **Backup và recovery**
    ```bash
-   # Reset test environment
-   rm -rf test_snapshots/
-   cargo test
+   # Backup thông tin contract
+   echo "CONTRACT_ID=$CONTRACT_ID" > .env
+   echo "ADMIN_ADDRESS=$(stellar keys address alice)" >> .env
    ```
 
-## 📈 Performance & Optimization
+## 📈 Roadmap và phát triển
 
-- **Contract Size:** ~150KB WASM optimized
-- **Gas Efficiency:** Optimized storage patterns
-- **Scalability:** Efficient data structures
-- **Caching:** Incremental build support
+### Tính năng có thể mở rộng
 
-## 🔄 Development Workflow
+1. **Multi-signature support** - Yêu cầu nhiều chữ ký cho admin actions
+2. **Identity recovery** - Cơ chế khôi phục identity khi mất private key
+3. **Reputation system** - Hệ thống đánh giá uy tín dựa trên verification
+4. **Integration hooks** - Webhook cho external systems
+5. **Batch operations** - Xử lý nhiều identities cùng lúc
 
-```mermaid
-graph TD
-    A[Start Development] --> B[Environment Check]
-    B --> C[Write/Modify Code]
-    C --> D[Unit Tests]
-    D --> E[Build Contract]
-    E --> F[Deploy to Testnet]
-    F --> G[Integration Tests]
-    G --> H[Production Ready]
-    
-    D -->|Test Fail| C
-    F -->|Deploy Fail| E
-    G -->|Test Fail| C
+### Deployment lên Mainnet
+
+```bash
+# Khi sẵn sàng deploy lên mainnet
+stellar contract deploy \
+    --source <production-account> \
+    --network mainnet \
+    --wasm target/wasm32v1-none/release/stellar_digital_identity.wasm
 ```
-
-## 📚 Advanced Usage
-
-### Custom Network Deployment
-
-```powershell
-# Deploy to custom network
-.\scripts\deploy.ps1 -Network mainnet -RpcUrl "https://your-rpc-url.com"
-```
-
-### Batch Operations
-
-```powershell
-# Register multiple test identities
-for ($i=1; $i -le 5; $i++) {
-    .\scripts\utils.ps1 -Action register
-}
-```
-
-### Contract Monitoring
-
-```powershell
-# Continuous monitoring
-while ($true) {
-    .\scripts\utils.ps1 -Action stats
-    Start-Sleep 30
-}
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🔗 Resources
-
-- [Stellar Developer Portal](https://developers.stellar.org/)
-- [Soroban Documentation](https://soroban.stellar.org/)
-- [Rust Programming Language](https://www.rust-lang.org/)
-- [Stellar CLI Documentation](https://developers.stellar.org/docs/tools/cli)
-
-## 📞 Support
-
-Để được hỗ trợ:
-1. Tạo issue trên GitHub repository
-2. Kiểm tra [Stellar Developer Discord](https://discord.gg/stellardev)
-3. Xem [Soroban Examples](https://github.com/stellar/soroban-examples)
 
 ---
 
-**Built with ❤️ for the Stellar ecosystem**
+## 📄 License
+
+MIT License - Xem file LICENSE để biết chi tiết.
+
+## 🤝 Contributing
+
+Mọi đóng góp đều được hoan nghênh! Vui lòng tạo issue hoặc pull request.
+
+## 📞 Hỗ trợ
+
+- **GitHub Issues**: [Tạo issue mới](https://github.com/your-repo/issues)
+- **Documentation**: Tài liệu Soroban tại [developers.stellar.org](https://developers.stellar.org)
+- **Community**: Stellar Discord và Stellar Stack Exchange
+
+---
+
+*Được xây dựng với ❤️ trên Stellar Network*

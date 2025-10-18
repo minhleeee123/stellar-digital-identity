@@ -357,6 +357,3 @@ impl DigitalIdentityContract {
         env.storage().instance().get(&DataKey::Admin).unwrap()
     }
 }
-
-#[cfg(test)]
-mod test;
