@@ -1,0 +1,261 @@
+import React, { useState } from 'react';
+import { contractService } from '../services/contractService';
+import { VERIFICATION_LEVELS } from '../config';
+
+function ManageIdentities({ wallet, showAlert }) {
+  const [identityId, setIdentityId] = useState('');
+  const [identity, setIdentity] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const [updateForm, setUpdateForm] = useState({
+    fullName: '',
+    email: '',
+    documentHash: ''
+  });
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    
+    if (!identityId) {
+      showAlert('Vui lòng nhập Identity ID', 'warning');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const data = await contractService.getIdentity(wallet.publicKey, identityId);
+      setIdentity(data);
+      setUpdateForm({
+        fullName: data.full_name,
+        email: data.email,
+        documentHash: data.document_hash // Already converted to hex in service
+      });
+      showAlert('✅ Tìm thấy danh tính!', 'success');
+    } catch (error) {
+      showAlert('❌ Không tìm thấy danh tính hoặc không có quyền truy cập', 'error');
+      setIdentity(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    
+    setUpdating(true);
+    try {
+      await contractService.updateIdentity(
+        wallet.keypair,
+        identityId,
+        updateForm.fullName,
+        updateForm.email,
+        updateForm.documentHash
+      );
+      
+      showAlert('✅ Cập nhật thành công!', 'success');
+      
+      // Reload identity
+      const data = await contractService.getIdentity(wallet.publicKey, identityId);
+      setIdentity(data);
+    } catch (error) {
+      showAlert('❌ Lỗi cập nhật: ' + error.message, 'error');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleDeactivate = async () => {
+    if (!confirm('Bạn có chắc muốn vô hiệu hóa danh tính này?')) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await contractService.deactivateIdentity(wallet.keypair, identityId);
+      showAlert('✅ Đã vô hiệu hóa danh tính!', 'success');
+      
+      // Reload identity
+      const data = await contractService.getIdentity(wallet.publicKey, identityId);
+      setIdentity(data);
+    } catch (error) {
+      showAlert('❌ Lỗi vô hiệu hóa: ' + error.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatDate = (timestamp) => {
+    return new Date(timestamp * 1000).toLocaleString('vi-VN');
+  };
+
+  return (
+    <div className="card">
+      <div className="card-header">
+        <h2 className="card-title">📋 Quản lý Danh tính</h2>
+      </div>
+
+      {/* Search Form */}
+      <form onSubmit={handleSearch} style={{ marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <input
+            type="text"
+            value={identityId}
+            onChange={(e) => setIdentityId(e.target.value)}
+            className="form-input"
+            placeholder="Nhập Identity ID để tìm kiếm..."
+            style={{ flex: 1 }}
+          />
+          <button type="submit" className="btn btn-primary" disabled={loading}>
+            {loading ? '⏳ Đang tìm...' : '🔍 Tìm kiếm'}
+          </button>
+        </div>
+      </form>
+
+      {/* Identity Details */}
+      {identity && (
+        <>
+          <div style={{ 
+            padding: '1.5rem', 
+            background: 'var(--gray-50)', 
+            borderRadius: 'var(--radius-lg)',
+            marginBottom: '2rem'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '600' }}>Thông tin Danh tính</h3>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                {identity.is_active ? (
+                  <span className="badge badge-success">Đang hoạt động</span>
+                ) : (
+                  <span className="badge badge-danger">Đã vô hiệu hóa</span>
+                )}
+                <span className={`badge badge-${VERIFICATION_LEVELS[identity.verification_level].color}`}>
+                  {VERIFICATION_LEVELS[identity.verification_level].label}
+                </span>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gap: '0.75rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: '1rem' }}>
+                <strong>Identity ID:</strong>
+                <span style={{ fontFamily: 'monospace' }}>{identityId}</span>
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: '1rem' }}>
+                <strong>Owner:</strong>
+                <span style={{ fontFamily: 'monospace', fontSize: '0.875rem', wordBreak: 'break-all' }}>
+                  {identity.owner}
+                </span>
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: '1rem' }}>
+                <strong>Họ và Tên:</strong>
+                <span>{identity.full_name}</span>
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: '1rem' }}>
+                <strong>Email:</strong>
+                <span>{identity.email}</span>
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: '1rem' }}>
+                <strong>Document Hash:</strong>
+                <span style={{ fontFamily: 'monospace', fontSize: '0.875rem', wordBreak: 'break-all' }}>
+                  {identity.document_hash}
+                </span>
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: '1rem' }}>
+                <strong>Ngày tạo:</strong>
+                <span>{formatDate(identity.created_at)}</span>
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: '1rem' }}>
+                <strong>Cập nhật lần cuối:</strong>
+                <span>{formatDate(identity.updated_at)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Update Form */}
+          {identity.owner === wallet.publicKey && identity.is_active && (
+            <div style={{ 
+              padding: '1.5rem', 
+              background: 'white',
+              border: '2px solid var(--gray-200)', 
+              borderRadius: 'var(--radius-lg)',
+              marginBottom: '2rem'
+            }}>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem' }}>
+                ✏️ Cập nhật Thông tin
+              </h3>
+              
+              <form onSubmit={handleUpdate}>
+                <div className="form-group">
+                  <label className="form-label">Họ và Tên</label>
+                  <input
+                    type="text"
+                    value={updateForm.fullName}
+                    onChange={(e) => setUpdateForm({ ...updateForm, fullName: e.target.value })}
+                    className="form-input"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Email</label>
+                  <input
+                    type="email"
+                    value={updateForm.email}
+                    onChange={(e) => setUpdateForm({ ...updateForm, email: e.target.value })}
+                    className="form-input"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Document Hash</label>
+                  <input
+                    type="text"
+                    value={updateForm.documentHash}
+                    onChange={(e) => setUpdateForm({ ...updateForm, documentHash: e.target.value })}
+                    className="form-input"
+                    required
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+                  <button 
+                    type="submit" 
+                    className="btn btn-success"
+                    disabled={updating}
+                  >
+                    {updating ? '⏳ Đang cập nhật...' : '💾 Lưu thay đổi'}
+                  </button>
+                  
+                  <button 
+                    type="button"
+                    onClick={handleDeactivate}
+                    className="btn btn-danger"
+                    disabled={updating}
+                  >
+                    🗑️ Vô hiệu hóa
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+        </>
+      )}
+
+      {!identity && (
+        <div className="empty-state">
+          <div className="empty-state-icon">🔍</div>
+          <h3 className="empty-state-title">Tìm kiếm Danh tính</h3>
+          <p>Nhập Identity ID vào ô tìm kiếm để xem và quản lý danh tính</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default ManageIdentities;

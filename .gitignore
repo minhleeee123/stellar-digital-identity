@@ -1,5 +1,5 @@
 # Stellar Digital Identity Contract
-
+node_modules/
 target/
 .env
 contract-info.json
