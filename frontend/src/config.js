@@ -1,5 +1,5 @@
 // Contract configuration
-export const CONTRACT_ID = 'CA6WCALSJ4HHQW56G6AI55CAG76KF6SCPMH3DQURNPXQVWRY4TINTFBC';
+export const CONTRACT_ID = 'CBT2DEP7OE362MONLUPOBKEBCVNMMKFBG5A6D6NFZFTU4L3ROPB4AZ76';
 export const NETWORK = 'TESTNET';
 export const NETWORK_PASSPHRASE = 'Test SDF Network ; September 2015';
 export const HORIZON_URL = 'https://horizon-testnet.stellar.org';

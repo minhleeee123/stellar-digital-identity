@@ -37,6 +37,16 @@ function ManageIdentities({ wallet, showAlert }) {
         email: data.email || '',
         documentHash: data.document_hash || ''
       });
+      
+      // Enhanced debug logging for verification level issues
+      console.log('=== VERIFICATION LEVEL DEBUG ===');
+      console.log('Raw verification_level:', data.verification_level);
+      console.log('Type:', typeof data.verification_level);
+      console.log('Is number:', typeof data.verification_level === 'number');
+      console.log('VERIFICATION_LEVELS config:', VERIFICATION_LEVELS);
+      console.log('Lookup result:', VERIFICATION_LEVELS[data.verification_level]);
+      console.log('================================');
+      
       showAlert('✅ Tìm thấy danh tính!', 'success');
     } catch (error) {
       console.error('Error getting identity:', error);
@@ -69,7 +79,13 @@ function ManageIdentities({ wallet, showAlert }) {
       // Try to reload identity
       try {
         const data = await contractService.getIdentity(wallet.publicKey, identityId);
+        console.log('Reloaded identity after update:', data);
         setIdentity(data);
+        setUpdateForm({
+          fullName: data.full_name || '',
+          email: data.email || '',
+          documentHash: data.document_hash || ''
+        });
       } catch (reloadError) {
         console.log('Could not reload identity data:', reloadError);
       }
@@ -84,33 +100,44 @@ function ManageIdentities({ wallet, showAlert }) {
     }
   };
 
-  const handleDeactivate = async () => {
-    if (!confirm('Bạn có chắc muốn vô hiệu hóa danh tính này?')) {
+  const handleToggleActive = async () => {
+    const isCurrentlyActive = identity?.is_active;
+    const action = isCurrentlyActive ? 'vô hiệu hóa' : 'kích hoạt lại';
+    
+    if (!confirm(`Bạn có chắc muốn ${action} danh tính này?`)) {
       return;
     }
 
     setLoading(true);
     try {
-      const result = await contractService.deactivateIdentity(wallet.keypair, identityId);
+      // Use appropriate function based on current state
+      const result = isCurrentlyActive 
+        ? await contractService.deactivateIdentity(wallet.keypair, identityId)
+        : await contractService.activateIdentity(wallet.keypair, identityId);
       
       if (result && (result.successful || result.status === 'SUCCESS')) {
-        showAlert('✅ Đã vô hiệu hóa danh tính!', 'success');
+        showAlert(`✅ Đã ${action} danh tính!`, 'success');
+        // Update local state optimistically
+        setIdentity(prev => ({ ...prev, is_active: !isCurrentlyActive }));
       } else {
-        showAlert('⚠️ Vô hiệu hóa hoàn thành nhưng không thể xác nhận kết quả.', 'warning');
+        showAlert(`⚠️ ${action.charAt(0).toUpperCase() + action.slice(1)} hoàn thành nhưng không thể xác nhận kết quả.`, 'warning');
       }
       
-      // Try to reload identity
+      // Try to reload identity to get actual state
       try {
         const data = await contractService.getIdentity(wallet.publicKey, identityId);
+        console.log('Reloaded identity after toggle:', data);
         setIdentity(data);
       } catch (reloadError) {
-        console.log('Could not reload identity after deactivation:', reloadError);
+        console.log('Could not reload identity after toggle:', reloadError);
       }
     } catch (error) {
       if (error.message.includes('Bad union switch') || error.message.includes('union switch')) {
-        showAlert('✅ Đã vô hiệu hóa danh tính! (Lỗi parsing response nhưng transaction đã hoàn thành)', 'success');
+        showAlert(`✅ Đã ${action} danh tính! (Lỗi parsing response nhưng transaction đã hoàn thành)`, 'success');
+        // Update local state optimistically on parsing error
+        setIdentity(prev => ({ ...prev, is_active: !isCurrentlyActive }));
       } else {
-        showAlert('❌ Lỗi vô hiệu hóa: ' + error.message, 'error');
+        showAlert(`❌ Lỗi ${action}: ` + error.message, 'error');
       }
     } finally {
       setLoading(false);
@@ -119,11 +146,29 @@ function ManageIdentities({ wallet, showAlert }) {
 
   const formatDate = (timestamp) => {
     try {
-      if (!timestamp) return 'N/A';
-      return new Date(timestamp * 1000).toLocaleString('vi-VN');
+      if (!timestamp || timestamp === 0) return 'N/A';
+      
+      // Handle both string and number timestamps
+      const numTimestamp = typeof timestamp === 'string' ? parseInt(timestamp) : timestamp;
+      
+      if (isNaN(numTimestamp) || numTimestamp <= 0) return 'N/A';
+      
+      // Create date from timestamp (assuming it's in seconds)
+      const date = new Date(numTimestamp * 1000);
+      
+      if (isNaN(date.getTime())) return 'N/A';
+      
+      return date.toLocaleString('vi-VN', {
+        year: 'numeric',
+        month: '2-digit', 
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
     } catch (error) {
       console.error('Error formatting date:', error);
-      return 'Invalid Date';
+      return 'N/A';
     }
   };
 
@@ -146,13 +191,24 @@ function ManageIdentities({ wallet, showAlert }) {
               ) : (
                 <span className="badge badge-danger">Đã vô hiệu hóa</span>
               )}
-              {VERIFICATION_LEVELS[identity.verification_level] ? (
-                <span className={`badge badge-${VERIFICATION_LEVELS[identity.verification_level].color}`}>
-                  {VERIFICATION_LEVELS[identity.verification_level].label}
-                </span>
-              ) : (
-                <span className="badge badge-secondary">Level {identity.verification_level || 0}</span>
-              )}
+              {(() => {
+                const verificationLevel = identity.verification_level;
+                const levelInfo = VERIFICATION_LEVELS[verificationLevel];
+                
+                if (levelInfo) {
+                  return (
+                    <span className={`badge badge-${levelInfo.color}`}>
+                      {levelInfo.label}
+                    </span>
+                  );
+                } else {
+                  return (
+                    <span className="badge badge-secondary">
+                      Level {verificationLevel !== undefined ? verificationLevel : 'N/A'}
+                    </span>
+                  );
+                }
+              })()}
             </div>
           </div>
 
@@ -235,7 +291,7 @@ function ManageIdentities({ wallet, showAlert }) {
       {renderIdentityDetails()}
 
       {/* Update Form */}
-      {identity && identity.owner === wallet.publicKey && identity.is_active && (
+      {identity && identity.owner === wallet.publicKey && (
         <div style={{ 
           padding: '1.5rem', 
           background: 'white',
@@ -246,6 +302,21 @@ function ManageIdentities({ wallet, showAlert }) {
           <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem' }}>
             ✏️ Cập nhật Thông tin
           </h3>
+          
+          {!identity.is_active && (
+            <div style={{ 
+              padding: '1rem', 
+              background: 'var(--warning-light)',
+              border: '1px solid var(--warning)',
+              borderRadius: 'var(--radius-md)',
+              marginBottom: '1rem'
+            }}>
+              <strong style={{ color: 'var(--warning)' }}>⚠️ Lưu ý:</strong>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                Danh tính này đã bị vô hiệu hóa. Bạn vẫn có thể cập nhật thông tin và kích hoạt lại.
+              </p>
+            </div>
+          )}
           
           <form onSubmit={handleUpdate}>
             <div className="form-group">
@@ -290,13 +361,13 @@ function ManageIdentities({ wallet, showAlert }) {
                 {updating ? '⏳ Đang cập nhật...' : '💾 Lưu thay đổi'}
               </button>
               
-              <button 
+              <button
                 type="button"
-                onClick={handleDeactivate}
-                className="btn btn-danger"
-                disabled={updating}
+                onClick={handleToggleActive}
+                className={`btn ${identity?.is_active ? 'btn-danger' : 'btn-success'}`}
+                disabled={loading || updating}
               >
-                🗑️ Vô hiệu hóa
+                {identity?.is_active ? '🗑️ Vô hiệu hóa' : '✅ Kích hoạt lại'}
               </button>
             </div>
           </form>

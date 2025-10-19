@@ -209,10 +209,14 @@ export const contractService = {
           email: result.email || '',
           document_hash: result.document_hash || '',
           is_active: result.is_active !== undefined ? result.is_active : true,
-          verification_level: result.verification_level || 0,
+          verification_level: result.verification_level !== undefined ? result.verification_level : 0,
           created_at: result.created_at || 0,
           updated_at: result.updated_at || 0
         };
+
+        // Debug logging for verification level
+        console.log('Contract response verification_level:', result.verification_level);
+        console.log('Validated verification_level:', validatedResult.verification_level);
         
         return validatedResult;
       } else {
@@ -302,27 +306,61 @@ export const contractService = {
     const transaction = await buildTransaction(ownerAddress, operation);
     return await simulateAndSend(transaction, ownerKeypair);
   },
-  
-  // Get total identities (read-only)
-  async getTotalIdentities() {
-    const dummyKeypair = StellarSDK.Keypair.random();
-    const dummyAddress = dummyKeypair.publicKey();
+
+  // Activate identity (reactivate a deactivated identity)
+  async activateIdentity(ownerKeypair, identityId) {
+    const ownerAddress = ownerKeypair.publicKey();
     
     const operation = StellarSDK.Operation.invokeContractFunction({
       contract: CONTRACT_ID,
-      function: 'get_total_identities',
-      args: []
+      function: 'activate_identity',
+      args: [
+        StellarSDK.nativeToScVal(identityId, { type: 'string' })
+      ]
     });
     
-    const transaction = await buildTransaction(dummyAddress, operation);
-    
-    const simulated = await server.simulateTransaction(transaction);
-    
-    if (StellarSDK.SorobanRpc.Api.isSimulationSuccess(simulated)) {
-      return StellarSDK.scValToNative(simulated.result.retval);
+    const transaction = await buildTransaction(ownerAddress, operation);
+    return await simulateAndSend(transaction, ownerKeypair);
+  },
+  
+  // Get total identities (read-only)
+  async getTotalIdentities(requesterPublicKey = null) {
+    try {
+      // Try to use provided key, fallback to admin, then dummy
+      let sourceAddress = requesterPublicKey;
+      
+      if (!sourceAddress) {
+        try {
+          const admin = await this.getAdmin();
+          sourceAddress = admin;
+        } catch (adminError) {
+          // Fallback to dummy if admin lookup fails
+          const dummyKeypair = StellarSDK.Keypair.random();
+          sourceAddress = dummyKeypair.publicKey();
+        }
+      }
+      
+      const operation = StellarSDK.Operation.invokeContractFunction({
+        contract: CONTRACT_ID,
+        function: 'get_total_identities',
+        args: []
+      });
+      
+      const transaction = await buildTransaction(sourceAddress, operation);
+      const simulated = await server.simulateTransaction(transaction);
+      
+      if (StellarSDK.SorobanRpc.Api.isSimulationSuccess(simulated)) {
+        const result = StellarSDK.scValToNative(simulated.result.retval);
+        console.log('Total identities from contract:', result);
+        return result;
+      }
+      
+      console.log('Simulation failed for getTotalIdentities:', simulated);
+      return 0;
+    } catch (error) {
+      console.error('Error in getTotalIdentities:', error);
+      return 0;
     }
-    
-    return 0;
   },
   
   // Get admin address (read-only)
@@ -345,5 +383,53 @@ export const contractService = {
     }
     
     return null;
+  },
+
+  // Get identities by owner
+  async getIdentitiesByOwner(ownerKeypair) {
+    try {
+      const ownerAddress = ownerKeypair.publicKey();
+      
+      const operation = StellarSDK.Operation.invokeContractFunction({
+        contract: CONTRACT_ID,
+        function: 'get_identities_by_owner',
+        args: [
+          new StellarSDK.Address(ownerAddress).toScVal()
+        ]
+      });
+      
+      const transaction = await buildTransaction(ownerAddress, operation);
+      const simulated = await server.simulateTransaction(transaction);
+      
+      if (StellarSDK.SorobanRpc.Api.isSimulationSuccess(simulated)) {
+        const identityIds = StellarSDK.scValToNative(simulated.result.retval);
+        
+        // Get detailed info for each identity
+        const identities = [];
+        for (const identityId of identityIds) {
+          try {
+            const identity = await this.getIdentity(ownerAddress, identityId);
+            if (identity) {
+              identities.push({ ...identity, identity_id: identityId });
+            }
+          } catch (error) {
+            console.log(`Could not get details for identity ${identityId}:`, error);
+            // Still add to list even if details fail
+            identities.push({ 
+              identity_id: identityId, 
+              error: 'Could not load details' 
+            });
+          }
+        }
+        
+        return identities;
+      } else {
+        console.error('Simulation failed:', simulated);
+        return [];
+      }
+    } catch (error) {
+      console.error('Error in getIdentitiesByOwner:', error);
+      return [];
+    }
   }
 };

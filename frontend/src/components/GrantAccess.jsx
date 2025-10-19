@@ -29,6 +29,32 @@ function GrantAccess({ wallet, showAlert }) {
 
     setGrantLoading(true);
     try {
+      // First, validate that the identity exists and is active
+      showAlert('🔍 Đang kiểm tra danh tính...', 'info');
+      
+      let identity;
+      try {
+        identity = await contractService.getIdentity(wallet.publicKey, formData.identityId);
+      } catch (identityError) {
+        if (identityError.message.includes('Data parsing error') || 
+            identityError.message.includes('Bad union switch')) {
+          // Identity may exist but can't be parsed - allow operation
+          showAlert('⚠️ Không thể kiểm tra danh tính, tiếp tục cấp quyền...', 'warning');
+        } else {
+          throw new Error(`Danh tính không tồn tại hoặc không thể truy cập: ${identityError.message}`);
+        }
+      }
+      
+      // Check if identity is active (if we could retrieve it)
+      if (identity && !identity.is_active) {
+        if (!confirm('Danh tính này đã bị vô hiệu hóa. Bạn có chắc muốn cấp quyền không?')) {
+          setGrantLoading(false);
+          return;
+        }
+      }
+      
+      showAlert('✅ Danh tính hợp lệ, đang cấp quyền...', 'info');
+      
       const durationSeconds = parseInt(formData.durationDays) * 24 * 60 * 60;
       
       const result = await contractService.grantAccess(
@@ -84,6 +110,21 @@ function GrantAccess({ wallet, showAlert }) {
 
     setRevokeLoading(true);
     try {
+      // Validate identity exists before revoking
+      showAlert('🔍 Đang kiểm tra danh tính...', 'info');
+      
+      try {
+        await contractService.getIdentity(wallet.publicKey, formData.identityId);
+      } catch (identityError) {
+        if (!identityError.message.includes('Data parsing error') && 
+            !identityError.message.includes('Bad union switch')) {
+          throw new Error(`Danh tính không tồn tại: ${identityError.message}`);
+        }
+        // If parsing error, continue with revoke operation
+      }
+      
+      showAlert('✅ Danh tính hợp lệ, đang thu hồi quyền...', 'info');
+      
       const result = await contractService.revokeAccess(
         wallet.keypair,
         formData.identityId,

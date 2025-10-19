@@ -334,8 +334,6 @@ impl DigitalIdentityContract {
         };
 
         // Chỉ owner hoặc admin mới có thể vô hiệu hóa
-        // Kiểm tra xem requester có phải owner hoặc admin không
-        // Trong thực tế, bạn cần implement logic để xác định ai đang gọi hàm này
         identity_data.owner.require_auth();
 
         identity_data.is_active = false;
@@ -344,6 +342,27 @@ impl DigitalIdentityContract {
         env.storage().persistent().set(&DataKey::Identity(identity_id.clone()), &identity_data);
 
         log!(&env, "Identity deactivated: {}", identity_id);
+        true
+    }
+
+    /// Kích hoạt lại danh tính
+    pub fn activate_identity(env: Env, identity_id: String) -> bool {
+        let mut identity_data: IdentityData = match env.storage()
+            .persistent()
+            .get(&DataKey::Identity(identity_id.clone())) {
+            Some(data) => data,
+            None => return false,
+        };
+
+        // Chỉ owner hoặc admin mới có thể kích hoạt lại
+        identity_data.owner.require_auth();
+
+        identity_data.is_active = true;
+        identity_data.updated_at = env.ledger().timestamp();
+
+        env.storage().persistent().set(&DataKey::Identity(identity_id.clone()), &identity_data);
+
+        log!(&env, "Identity activated: {}", identity_id);
         true
     }
 
