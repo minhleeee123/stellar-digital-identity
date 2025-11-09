@@ -256,7 +256,7 @@ function Dashboard({ wallet, showAlert }) {
           
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', background: 'var(--gray-50)', borderRadius: 'var(--radius-md)', alignItems: 'center' }}>
             <strong>Contract ID:</strong>
-            <code style={{ fontSize: '0.75rem', wordBreak: 'break-all' }}>CBT2DEP7OE362MONLUPOBKEBCVNMMKFBG5A6D6NFZFTU4L3ROPB4AZ76</code>
+            <code style={{ fontSize: '0.75rem', wordBreak: 'break-all' }}>CAQSVF6OR3MHSDFLTSKG3IX7XL2UJGKKRATSF3CWWNGIFZ2A4JFGROMV</code>
           </div>
           
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', background: 'var(--gray-50)', borderRadius: 'var(--radius-md)' }}>
