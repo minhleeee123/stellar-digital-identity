@@ -1,8 +1,31 @@
-# 🌟 Stellar Digital Identity Smart Contract
+<div align="center">
 
-A smart contract for managing digital identities on the Stellar network, enabling users to register, verify, and manage identity access in a secure and decentralized manner.
+# Stellar Digital Identity Smart Contract
 
-## 🚀 Deployment Information
+### Decentralized Identity Management on Stellar Blockchain
+
+<p align="center">
+  <strong>Soroban Smart Contracts • Rust Programming • Decentralized Identity • Access Control • Blockchain Security</strong>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Rust-1.70+-CE422B?style=for-the-badge&logo=rust&logoColor=white" alt="Rust" />
+  <img src="https://img.shields.io/badge/Stellar-Soroban-00D1FF?style=for-the-badge&logo=stellar&logoColor=white" alt="Stellar" />
+  <img src="https://img.shields.io/badge/WASM-Target-654FF0?style=for-the-badge&logo=webassembly&logoColor=white" alt="WebAssembly" />
+  <img src="https://img.shields.io/badge/Smart_Contract-Deployed-7B3FF2?style=for-the-badge" alt="Smart Contract" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Status-Testnet_Deployed-success?style=flat-square" alt="Status" />
+  <img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" alt="License" />
+  <img src="https://img.shields.io/badge/Network-Stellar_Testnet-orange?style=flat-square" alt="Network" />
+</p>
+
+---
+
+</div>
+
+## Deployment Information
 
 **Contract deployed on Stellar Testnet:**
 
@@ -32,21 +55,65 @@ stellar contract invoke \
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
-- [Overview](#-overview)
-- [Architecture and Data Structures](#-architecture-and-data-structures)
-- [Core Features](#-core-features)
-- [Detailed Code Analysis](#-detailed-code-analysis)
-- [Installation and Requirements](#️-installation-and-requirements)
-- [Build Instructions](#-build-instructions)
-- [Deployment Guide](#-deployment-guide)
-- [Testing Guide](#-testing-guide)
-- [Usage Examples](#-usage-examples)
-- [API Reference](#-api-reference)
-- [Security](#-security)
+- [Quick Start](#quick-start)
+- [Deployment Information](#deployment-information)
+- [Overview](#overview)
+- [Architecture and Data Structures](#architecture-and-data-structures)
+- [Core Features](#core-features)
+- [Detailed Code Analysis](#detailed-code-analysis)
+- [Installation and Requirements](#installation-and-requirements)
+- [Build Instructions](#build-instructions)
+- [Deployment Guide](#deployment-guide)
+- [Testing Guide](#testing-guide)
+- [Usage Examples](#usage-examples)
+- [API Reference](#api-reference)
+- [Security](#security)
 
-## 🎯 Overview
+---
+
+## Quick Start
+
+Deploy and interact with the smart contract in 5 minutes:
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/minhleeee123/stellar-digital-identity.git
+cd stellar-digital-identity
+
+# 2. Build the contract
+stellar contract build
+
+# 3. Deploy to testnet
+stellar contract deploy \
+    --wasm target/wasm32-unknown-unknown/release/stellar_digital_identity.wasm \
+    --source alice \
+    --network testnet
+
+# 4. Initialize contract
+stellar contract invoke \
+    --id YOUR_CONTRACT_ID \
+    --source alice \
+    --network testnet \
+    -- initialize --admin ADMIN_ADDRESS
+
+# 5. Register an identity
+stellar contract invoke \
+    --id YOUR_CONTRACT_ID \
+    --source alice \
+    --network testnet \
+    -- register_identity \
+    --identity-id "ID001" \
+    --owner OWNER_ADDRESS \
+    --full-name "John Doe" \
+    --email "john@example.com" \
+    --document-hash "hash123"
+```
+
+---
+
+## Deployment Information
 
 **Stellar Digital Identity** is a smart contract built on Soroban (Stellar smart contract platform) for managing digital identities. This contract provides:
 
@@ -56,7 +123,43 @@ stellar contract invoke \
 - **Data Security**: Uses hashing for storing verification documents
 - **Audit Trail**: Tracks all changes with timestamps
 
-## 🏗 Architecture and Data Structures
+---
+
+## Overview
+
+**Stellar Digital Identity** is a smart contract built on Soroban (Stellar smart contract platform) for managing decentralized digital identities. This contract provides a secure, blockchain-based solution for identity management with granular access controls.
+
+### Key Capabilities
+
+**Decentralized Identity Management**
+- Create and manage digital identities on-chain
+- Self-sovereign identity ownership
+- Immutable identity history on blockchain
+
+**Multi-Level Verification System**
+- 4-tier verification levels (0-3)
+- Admin-controlled verification process
+- Verification status tracking
+
+**Granular Access Control**
+- Time-bound access permissions
+- Three permission types: read, verify, full access
+- Owner-controlled permission management
+
+**Security & Privacy**
+- Document hash storage for privacy
+- Owner authentication for all operations
+- Comprehensive audit trail
+
+**Blockchain Benefits**
+- Transparent and immutable records
+- Cryptographic security
+- Decentralized architecture
+- No single point of failure
+
+---
+
+## Architecture and Data Structures
 
 ### Main Data Structures
 
@@ -115,7 +218,9 @@ pub enum DataKey {
 
 **Purpose**: Defines keys for storing data in Stellar storage, optimizing data retrieval and organization.
 
-## ⚡ Core Features
+---
+
+## Core Features
 
 ### 1. **Identity Management**
 - Register new identity with basic information
@@ -137,7 +242,9 @@ pub enum DataKey {
 - Document hashing for privacy protection
 - Event logging for audit trail
 
-## 🔍 Detailed Code Analysis
+---
+
+## Detailed Code Analysis
 
 ### Initialize Function
 ```rust
@@ -274,7 +381,9 @@ pub fn get_identity(env: Env, identity_id: String, requester: Address) -> Option
 - Check valid and unexpired permissions
 - Return None if no access
 
-## 🛠️ Installation and Requirements
+---
+
+## Installation and Requirements
 
 ### System Requirements
 - **Rust**: version 1.70+
@@ -307,7 +416,9 @@ cd stellar-digital-identity
 cargo check
 ```
 
-## 🔧 Build Instructions
+---
+
+## Build Instructions
 
 ### Step 1: Check Environment
 ```bash
@@ -339,7 +450,9 @@ ls -la target/wasm32-unknown-unknown/release/stellar_digital_identity.wasm
 du -h target/wasm32-unknown-unknown/release/stellar_digital_identity.wasm
 ```
 
-## 🚀 Deployment Guide
+---
+
+## Deployment Guide
 
 ### Step 1: Create and Fund Account
 
@@ -399,7 +512,9 @@ stellar contract invoke \
     -- get_total_identities
 ```
 
-## 🧪 Testing Guide
+---
+
+## Testing Guide
 
 ### Basic Tests
 
@@ -510,7 +625,9 @@ stellar contract invoke \
     --owner $(stellar keys address alice)
 ```
 
-## 💡 Usage Examples
+---
+
+## Usage Examples
 
 ### Scenario 1: Register Personal Identity
 
@@ -567,10 +684,9 @@ stellar contract invoke --source alice --network testnet --id $CONTRACT_ID \
 --document_hash "new_document_hash_000000000000000000000000000000000000000000000"
 ```
 
-## 📚 API Reference
+---
 
-### Core Functions
-
+## API Reference
 | Function | Parameters | Return | Description |
 |----------|------------|--------|-------------|
 | `initialize` | `admin: Address` | `void` | Initialize contract with admin |
@@ -619,7 +735,9 @@ stellar contract invoke --source alice --network testnet --id $CONTRACT_ID \
 | 2 | Standard verification |
 | 3 | Highest verification |
 
-## 🔒 Security
+---
+
+## Security
 
 ### Implemented Security Measures
 
@@ -665,7 +783,9 @@ stellar contract invoke --source alice --network testnet --id $CONTRACT_ID \
    echo "ADMIN_ADDRESS=$(stellar keys address alice)" >> .env
    ```
 
-## 📈 Roadmap and Development
+---
+
+## Roadmap and Development
 
 ### Potential Features
 
@@ -687,18 +807,51 @@ stellar contract deploy \
 
 ---
 
-## 📄 License
+## License
 
-MIT License - See LICENSE file for details.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🤝 Contributing
+---
 
-All contributions are welcome! Please create an issue or pull request.
+## Contributing
 
-## 📞 Support
+Contributions are welcome! Please follow these steps:
 
-- **GitHub Issues**: [Create new issue](https://github.com/minhleeee123/stellar-digital-identity/issues)
-- **Documentation**: Soroban documentation at [developers.stellar.org](https://developers.stellar.org)
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Open Pull Request
+
+---
+
+## Resources
+
+- **Stellar Documentation**: https://developers.stellar.org
+- **Soroban Docs**: https://soroban.stellar.org/docs
+- **Rust Documentation**: https://doc.rust-lang.org
+- **Contract Explorer**: https://stellar.expert/explorer/testnet
+
+---
+
+<div align="center">
+
+## Support & Contact
+
+For questions or issues:
+- Open an issue on GitHub
+- Check Stellar documentation
+- Join Stellar community Discord
+
+**Built for Decentralized Identity on Stellar**
+
+Powered by Soroban Smart Contracts
+
+---
+
+**Secure • Decentralized • Transparent**
+
+</div>
 - **Community**: Stellar Discord and Stellar Stack Exchange
 
 ---
